@@ -1,1 +1,60 @@
-return "1.0"
+local lib = loadstring(game:HttpGet("https://github.com/riddance-club/library/releases/latest/download/Dandys_World.lua"))()
+local pps = game:GetService("ProximityPromptService")
+
+local Tab = getgenv().Tab
+local connections = {}
+
+local Section = Tab:Section({
+    Title = "Random stuff library",
+    Desc = "An extension that contains random stuff.",
+    Icon = "quote",
+    Opened = true,
+})
+
+if currver ~= ver then
+Section:Paragraph({
+    Title = "Outdated library",
+    Desc = "Your extension is outdated, get the newer version in our thread!",
+    Image = "triangle-alert",
+    Color = Color3.fromRGB(255,30,30),
+})
+end
+
+Section:Toggle({
+    Title = "Double extraction speed",
+    Desc = "When you start extracting a dual machine that isn't occupied by anybody else, your extraction speed will be doubled.\nThis function will cause issues with the skill check, use instant calibration to fix it.",
+    Icon = "check",
+    Value = false,
+    Type = "Checkbox",
+    Callback = function(state)
+        if connections.doubleextract then connections.doubleextract:Disconnect() connections.doubleextract = nil end
+        if not state then return end
+        connections.doubleextract = pps.PromptTriggered:Connect(function(prompt, player)
+            if player ~= game.Players.LocalPlayer then return end
+            if not prompt or not prompt:IsA("ProximityPrompt") then return end
+            local att = prompt.Parent
+            if not att or not att:IsA("Attachment") then return end
+            local part = att.Parent
+            if not part or not part:IsA("BasePart") then return end
+            if not string.find(part.Name, "Prompt") then return end
+            local mdl = prompt:FindFirstAncestorOfClass("Model")
+            if not mdl then return end
+            local folder = mdl.Parent
+            if not folder or folder.Name ~= "Generators" then return end
+            if not lib.Generators.IsDual(mdl) then return end
+            local trgname
+            if part.Name == "Prompt" then
+                trgname = "Prompt2"
+            elseif part.Name == "Prompt2" then
+                trgname = "Prompt"
+            else return end
+            local trgpart = mdl:FindFirstChild(trgname, true)
+            if not trgpart or not trgpart:IsA("BasePart") then return end
+            local trgatt = trgpart:FindFirstChildWhichIsA("Attachment")
+            if not trgatt then return end
+            local trgprompt = trgatt:FindFirstChildWhichIsA("ProximityPrompt")
+            if not trgprompt then return end
+            fireproximityprompt(trgprompt)
+        end)
+    end
+}) 
