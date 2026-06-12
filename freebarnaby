@@ -1,6 +1,6 @@
 local runservice = game:GetService("RunService")
 local sgui = game:GetService("StarterGui")
-local net = require(game:GetService("ReplicatedStorage").SharedUtils.Network)
+local net = game:GetService("ReplicatedStorage").SharedUtils.Network
 
 sgui:SetCore("SendNotification", {
     Title = "hey",
@@ -27,7 +27,7 @@ end
 task.spawn(function()
     while currgame and currgame.SessionId do
         if rawget(currgame, "Score") and currgame.Score > 0 then
-            currgame.Score = getgenv().scoretostartwith or 0
+            currgame.Score = getgenv().scoretostartwith or 99
             break
         end
         task.wait()
@@ -38,9 +38,8 @@ task.spawn(function()
     while currgame and currgame.SessionId do
         if currgame.Fish then
             currgame.Fish:Jump()
-            if currgame.ID then
-                net:Post("ReportArcadeMilestone", currgame.ID)
-            end
+                net.RemoteEvent:FireServer("ReportArcadeMilestone", currgame.ID)
+                net.RemoteFunction:InvokeServer("ReportArcadeMilestone", currgame.ID)
         end
         task.wait(0.7)
     end
