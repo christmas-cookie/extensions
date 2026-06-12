@@ -1,0 +1,73 @@
+local runservice = game:GetService("RunService")
+local sgui = game:GetService("StarterGui")
+
+sgui:SetCore("SendNotification", {
+    Title = "hey",
+    Text = "made by that ∆ guy on discord",
+    Duration = 5
+})
+
+local currgame = nil
+
+while not currgame do
+    for fart, dart in ipairs(getgc(true)) do
+        if type(dart) == "table" and rawget(dart, "Fish") and rawget(dart, "GAME_CONFIG") and rawget(dart, "SessionId") then
+            if dart.SurfaceGui and dart.SurfaceGui.Enabled then
+                currgame = dart
+                break
+            end
+        end
+    end
+    if not currgame then
+        task.wait(0.1)
+    end
+end
+
+task.spawn(function()
+    while currgame and currgame.SessionId do
+        if rawget(currgame, "Score") and currgame.Score > 0 then
+            currgame.Score = getgenv().scoretostartwith or 0
+            break
+        end
+        task.wait()
+    end
+end)
+
+task.spawn(function()
+    while currgame and currgame.SessionId do
+        if currgame.Fish then
+            currgame.Fish:Jump()
+        end
+        task.wait(0.7)
+    end
+end)
+
+local connection
+connection = runservice.RenderStepped:Connect(function()
+    if not currgame or not currgame.Fish or not currgame.SessionId then
+        connection:Disconnect()
+        return
+    end
+
+    local parent = currgame.Parent
+    if not parent then return end
+
+    local barnaby = currgame.Fish.Part
+    if barnaby and barnaby:IsA("BasePart") then
+        barnaby.CFrame = CFrame.new(barnaby.Position.X, 0, barnaby.Position.Z)
+    end
+
+    for fart, model in ipairs(parent:GetChildren()) do
+        if model:IsA("Model") and model ~= barnaby then
+            for fart, dart in ipairs(model:GetDescendants()) do
+                if dart:IsA("BasePart") then
+                    dart.CanCollide = false
+                    dart.CanTouch = false
+                    dart.CanQuery = false
+                    dart.Size = Vector3.new(0, 0, 0)
+                    dart.CFrame = CFrame.new(dart.Position.X, -999, dart.Position.Z)
+                end
+            end
+        end
+    end
+end)
