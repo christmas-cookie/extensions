@@ -1,5 +1,6 @@
 local runservice = game:GetService("RunService")
 local sgui = game:GetService("StarterGui")
+local net = require(game:GetService("ReplicatedStorage").SharedUtils.Network)
 
 sgui:SetCore("SendNotification", {
     Title = "hey",
@@ -37,6 +38,9 @@ task.spawn(function()
     while currgame and currgame.SessionId do
         if currgame.Fish then
             currgame.Fish:Jump()
+            if currgame.ID then
+                net:Post("ReportArcadeMilestone", currgame.ID)
+            end
         end
         task.wait(0.7)
     end
