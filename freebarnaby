@@ -1,7 +1,6 @@
 local rs = game:GetService("ReplicatedStorage")
 local players = game:GetService("Players")
 local sgui = game:GetService("StarterGui")
-local net = game:GetService("ReplicatedStorage").SharedUtils.Network
 
 sgui:SetCore("SendNotification", {
     Title = "hey",
