@@ -1,4 +1,5 @@
-local runservice = game:GetService("RunService")
+local rs = game:GetService("ReplicatedStorage")
+local players = game:GetService("Players")
 local sgui = game:GetService("StarterGui")
 local net = game:GetService("ReplicatedStorage").SharedUtils.Network
 
@@ -8,69 +9,133 @@ sgui:SetCore("SendNotification", {
     Duration = 5
 })
 
-local currgame = nil
+local barnabymodule = require(rs.SharedData.ArcadeGames.SwimmyBarnaby)
+local lp = players.LocalPlayer
+local pg = lp:WaitForChild("PlayerGui")
 
-while not currgame do
-    for fart, dart in ipairs(getgc(true)) do
-        if type(dart) == "table" and rawget(dart, "Fish") and rawget(dart, "GAME_CONFIG") and rawget(dart, "SessionId") then
-            if dart.SurfaceGui and dart.SurfaceGui.Enabled then
-                currgame = dart
-                break
+local function barnabify(session)
+    session.forcekill = false
+
+    if type(session.tick) == "function" or (getmetatable(session) and session.tick) then
+        local oldtick = session.tick
+        session.tick = function(self, ...)
+            if self.forcekill then
+                return -1
             end
+            
+            local result = oldtick(self, ...)
+            if result == -1 then
+                return 0
+            end
+            return result
         end
     end
-    if not currgame then
-        task.wait(0.1)
+
+    if type(session.Jump) == "function" then
+        session.Jump = function() end
     end
+    if session.Fish and type(session.Fish.Jump) == "function" then
+        session.Fish.Jump = function() end
+    end
+
+    pcall(function()
+        local uisource = rs.SharedData.ArcadeGames.SwimmyBarnaby.ClientUI
+        local customui = uisource:Clone()
+        customui.Name = "end me"
+        
+        if customui:IsA("ScreenGui") then
+            customui.DisplayOrder = 999999999
+        end
+        
+        customui.Parent = pg
+
+        local bottom = customui.Bottom
+        local mobile = bottom.Mobile
+        local unpressed = mobile.Unpressed
+        local textlabel = unpressed.TextLabel
+        local hint = bottom.Hint
+
+        textlabel.Text = "END GAME"
+        bottom.Visible = true
+        hint.Visible = false
+        bottom.ZIndex = 9e9
+        mobile.ZIndex = 9e9
+        unpressed.ZIndex = 9e9
+        textlabel.ZIndex = 9e9
+
+        mobile.Activated:Connect(function()
+            session.forcekill = true
+            customui:Destroy()
+        end)
+    end)
+
+    if session.Fish then
+        pcall(function()
+            session.Fish:SetGravity(0)
+        end)
+        
+        if session.Fish.Part then
+            task.spawn(function()
+                while session.SessionId and not session.forcekill do
+                    pcall(function()
+                        local cf = session.Fish.Part:GetPivot()
+                        session.Fish.Part:PivotTo(CFrame.new(cf.X, 0, cf.Z))
+                    end)
+                    task.wait()
+                end
+            end)
+        end
+    end
+
+    task.spawn(function()
+        while session.SessionId and not session.forcekill do
+            pcall(function()
+                if session.Parent then
+                    for fart, child in ipairs(session.Parent:GetChildren()) do
+                        if child:IsA("Model") and (child.Name:find("Obstacle") or child:FindFirstChild("BendySeaweed")) then
+                            for fart, descendant in ipairs(child:GetDescendants()) do
+                                if descendant:IsA("BasePart") then
+                                    descendant.CanCollide = false
+                                    descendant.CanTouch = false
+                                    descendant:Destroy()
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+            task.wait()
+        end
+    end)
 end
 
-task.spawn(function()
-    while currgame and currgame.SessionId do
-        if rawget(currgame, "Score") and currgame.Score > 0 then
-            currgame.Score = getgenv().scoretostartwith or 99
-            break
-        end
-        task.wait()
-    end
-end)
-
-task.spawn(function()
-    while currgame and currgame.SessionId do
-        if currgame.Fish then
-            currgame.Fish:Jump()
-                net.RemoteEvent:FireServer("ReportArcadeMilestone", currgame.ID)
-                net.RemoteFunction:InvokeServer("ReportArcadeMilestone", currgame.ID)
-        end
-        task.wait(0.7)
-    end
-end)
-
-local connection
-connection = runservice.RenderStepped:Connect(function()
-    if not currgame or not currgame.Fish or not currgame.SessionId then
-        connection:Disconnect()
-        return
-    end
-
-    local parent = currgame.Parent
-    if not parent then return end
-
-    local barnaby = currgame.Fish.Part
-    if barnaby and barnaby:IsA("BasePart") then
-        barnaby.CFrame = CFrame.new(barnaby.Position.X, 0, barnaby.Position.Z)
-    end
-
-    for fart, model in ipairs(parent:GetChildren()) do
-        if model:IsA("Model") and model ~= barnaby then
-            for fart, dart in ipairs(model:GetDescendants()) do
-                if dart:IsA("BasePart") then
-                    dart.CanCollide = false
-                    dart.CanTouch = false
-                    dart.CanQuery = false
-                    dart.Size = Vector3.new(0, 0, 0)
-                    dart.CFrame = CFrame.new(dart.Position.X, -999, dart.Position.Z)
-                end
+local oldstart = barnabymodule.Start
+barnabymodule.Start = function(self, creators)
+    if creators and creators.Obstacle then
+        local oldvein = creators.Obstacle
+        creators.Obstacle = function(...)
+            local vein = oldvein(...)
+            if vein and vein.Model then
+                pcall(function()
+                    for fart, part in ipairs(vein.Model:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                            part.CanTouch = false
+                        end
+                    end
+                end)
             end
+            return vein
         end
     end
-end)
+    
+    local res = oldstart(self, creators)
+    barnabify(self)
+    return res
+end
+
+for fart, v in ipairs(getgc(true)) do
+    if type(v) == "table" and rawget(v, "GAME_CONFIG") and rawget(v, "SessionId") then
+        barnabify(v)
+    end
+end
