@@ -6,7 +6,7 @@ local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 
 local Fertilizer = loadstring(game:HttpGet("https://raw.githubusercontent.com/linear-org/linear/refs/heads/main/utilities/fertilizer.lua"))()
-local WindUI = loadstring(game:HttpGet("https://pastefy.app/5GJr5qXw/raw"))()
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/christmas-cookie/Main/refs/heads/main/WindUI-Boreal-Fix.lua"))()
 
 local Values = {}
 
