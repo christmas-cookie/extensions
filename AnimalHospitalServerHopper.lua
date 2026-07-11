@@ -217,7 +217,7 @@ Joiner:Toggle({
                             TeleportService:TeleportToPlaceInstance(game.PlaceId, Values.targetjob, Players.LocalPlayer)
                         end)
                     end
-                    task.wait(Values.Delay or .1)
+                    task.wait(Values.Delay or 0.3)
                 end
             end)
         else
@@ -235,7 +235,7 @@ Joiner:Slider({
     Value = {
         Min = 0,
         Max = 5,
-        Default = 0.1
+        Default = 0.3
     },
     Step = 0.1,
     Callback = function(value)
