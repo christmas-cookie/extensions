@@ -201,3 +201,44 @@ Joiner:Button({
         toclipboard(game.JobId)
     end
 })
+
+Joiner:Divider()
+
+Joiner:Toggle({
+    Title = "Loop Join Server",
+    Desc = "Attempts to join the server with the given job id until you actually join it.",
+    Value = false,
+    Callback = function(state)
+        if state then
+            Values.Loop = task.spawn(function()
+                while true do
+                    if Values.targetjob and Values.targetjob ~= "" then
+                        pcall(function()
+                            TeleportService:TeleportToPlaceInstance(game.PlaceId, Values.targetjob, Players.LocalPlayer)
+                        end)
+                    end
+                    task.wait(Values.Delay or .1)
+                end
+            end)
+        else
+            if Values.Loop then
+                task.cancel(Values.Loop)
+                Values.Loop = nil
+            end
+        end
+    end
+})
+
+Joiner:Slider({
+    Title = "Loop Delay",
+    Desc = "How many seconds to wait before re-trying to join the server.",
+    Value = {
+        Min = 0,
+        Max = 5,
+        Default = 0.1
+    },
+    Step = 0.1,
+    Callback = function(value)
+        Values.Delay = value
+    end
+})
